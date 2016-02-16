@@ -1,0 +1,64 @@
+<?php
+
+function skivers_user_register_rules_menu() {
+	$items = array();
+	$items['admin/config/skivers_user_register_rules'] = array(
+		'title' => 'Registration Config',
+		'description' => '',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('skivers_user_register_rules_admin'),
+		'access arguments' => array('administer skivers_user_register_rules module'),
+		'type' => MENU_NORMAL_ITEM,
+	);
+	return $items;
+}
+
+
+// Admin
+function skivers_user_register_rules_admin() {
+
+	$form = array();
+
+	$form['skivers_user_register_rules_email_markup'] = array(
+		'#markup' => '<h4>Register Email Domain Settings</h4><hr>'
+	);
+	
+	$form['skivers_user_register_rules_email_domains'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Email Domains'),
+		'#default_value' => variable_get('skivers_user_register_rules_email_domains', variable_get('skivers_user_register_rules_email_domains','gmail.com,gmail.co.uk')),
+		'#size' => 100,
+		'#maxlength' => 1000,
+		'#description' => t("please enter domains and then seperate them by commas eg hotmail.com, hotmal.co.uk, yahoo.co.uk etc "),
+		'#required' => TRUE,
+	);
+	
+	return system_settings_form($form);
+}
+
+function skivers_user_register_rules_form_alter(&$form, &$form_state, $form_id) {
+	// make sure this is the register form
+	if ($form_id == 'user_register_form') {
+		// this adds your custom validation function to the form validation array
+		$form['#validate'][] = 'skivers_user_register_rules_user_register_validation';
+	}
+}
+
+function skivers_user_register_rules_user_register_validation($form, &$form_state) {
+	$edomains =  variable_get('skivers_user_register_rules_email_domains','gmail.com,gmail.co.uk');
+	$emailDomains = explode(",",$edomains);
+	// Get domain
+	$email = $form_state['values']['mail'];
+	$splitIndex = strpos($email, '@') + 1;
+	$emailLength = strlen($email);
+	$domain = substr($email, $splitIndex, $emailLength);
+
+	// Error if not legitimate domain  
+	if (in_array($domain, $emailDomains)) {
+		form_set_error('mail', 'We cannot accept email addresses from domains eg hotmail, gmail and yahoo');
+	}
+}
+
+
+
+    
